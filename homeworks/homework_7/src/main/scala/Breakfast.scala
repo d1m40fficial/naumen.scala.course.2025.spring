@@ -29,13 +29,53 @@ object Breakfast extends ZIOAppDefault {
    * @param teaBrewingTime время заваривания чая
    * @return Мапу с информацией о том, когда завершился очередной этап (eggs, water, saladWithSourCream, tea)
    */
-  def makeBreakfast(eggsFiringTime: Duration,
-                    waterBoilingTime: Duration,
-                    saladInfoTime: SaladInfoTime,
-                    teaBrewingTime: Duration): ZIO[Any, Throwable, Map[String, LocalDateTime]] = ???
+  def makeBreakfast(
+                     eggsFiringTime: Duration,
+                     waterBoilingTime: Duration,
+                     saladInfoTime: SaladInfoTime,
+                     teaBrewingTime: Duration
+                   ): ZIO[Any, Throwable, Map[String, LocalDateTime]] = {
+    for {
+      startTime <- ZIO.succeed(LocalDateTime.now)
 
+      // Start all parallel processes
+      waterFiber <- ZIO.sleep(waterBoilingTime).as("water").fork
+      eggsFiber <- ZIO.sleep(eggsFiringTime).as("eggs").fork
 
+      // Prepare salad sequentially
+      saladFiber <- (for {
+        _ <- ZIO.sleep(saladInfoTime.cucumberTime)
+        _ <- ZIO.sleep(saladInfoTime.tomatoTime)
+      } yield "saladWithSourCream").fork
 
-  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = ZIO.succeed(println("Done"))
+      // Wait for water to boil before making tea
+      teaFiber <- (waterFiber.join *> ZIO.sleep(teaBrewingTime)).as("tea").fork
 
+      // Wait for all to complete
+      eggs <- eggsFiber.join
+      eggsTime <- ZIO.succeed(LocalDateTime.now)
+
+      water <- waterFiber.join
+      waterTime <- ZIO.succeed(LocalDateTime.now)
+
+      salad <- saladFiber.join
+      saladTime <- ZIO.succeed(LocalDateTime.now)
+
+      tea <- teaFiber.join
+      teaTime <- ZIO.succeed(LocalDateTime.now)
+    } yield Map(
+      "eggs" -> eggsTime,
+      "water" -> waterTime,
+      "saladWithSourCream" -> saladTime,
+      "tea" -> teaTime
+    )
+  }
+
+  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
+    makeBreakfast(
+      eggsFiringTime = 5.seconds,
+      waterBoilingTime = 3.seconds,
+      saladInfoTime = SaladInfoTime(tomatoTime = 2.seconds, cucumberTime = 1.seconds),
+      teaBrewingTime = 1.seconds
+    ).flatMap(result => ZIO.succeed(println(result)))
 }

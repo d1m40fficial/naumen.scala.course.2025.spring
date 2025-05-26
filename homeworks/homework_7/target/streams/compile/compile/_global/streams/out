@@ -1,0 +1,6 @@
+[0m[[0m[31merror[0m] [0m[0mD:\My\Scala\naumen.scala.course.2025.spring\homeworks\homework_7\src\main\scala\ResuourceTraining.scala:40:7: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : zio.ZIO[Any with Any,Throwable,Unit][0m
+[0m[[0m[31merror[0m] [0m[0m required: zio.ZIO[Any,Nothing,Unit][0m
+[0m[[0m[31merror[0m] [0m[0m    } { writer =>[0m
+[0m[[0m[31merror[0m] [0m[0m      ^[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m
